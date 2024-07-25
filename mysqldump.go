@@ -29,6 +29,8 @@ type dumpOption struct {
 	// 是否删除表
 	isDropTable bool
 
+	where string
+
 	// writer 默认为 os.Stdout
 	writer io.Writer
 }
@@ -67,6 +69,12 @@ func WithAllTable() DumpOption {
 func WithWriter(writer io.Writer) DumpOption {
 	return func(option *dumpOption) {
 		option.writer = writer
+	}
+}
+
+func WithWhere(where string) DumpOption {
+	return func(option *dumpOption) {
+		option.where = where
 	}
 }
 
@@ -157,7 +165,7 @@ func Dump(dsn string, opts ...DumpOption) error {
 
 		// 导出表数据
 		if o.isData {
-			err = writeTableData(db, table, buf)
+			err = writeTableData(db, table, o.where, buf)
 			if err != nil {
 				log.Printf("[error] %v \n", err)
 				return err
@@ -227,14 +235,17 @@ func writeTableStruct(db *sql.DB, table string, buf *bufio.Writer) error {
 
 // 禁止 golangci-lint 检查
 // nolint: gocyclo
-func writeTableData(db *sql.DB, table string, buf *bufio.Writer) error {
+func writeTableData(db *sql.DB, table string, condition string, buf *bufio.Writer) error {
 
 	// 导出表数据
 	_, _ = buf.WriteString("-- ----------------------------\n")
 	_, _ = buf.WriteString(fmt.Sprintf("-- Records of %s\n", table))
 	_, _ = buf.WriteString("-- ----------------------------\n")
-
-	lineRows, err := db.Query(fmt.Sprintf("SELECT * FROM `%s`", table))
+	queryStr := fmt.Sprintf("SELECT * FROM `%s`", table)
+	if len(condition) > 0 {
+		queryStr += fmt.Sprintf(" %s", condition)
+	}
+	lineRows, err := db.Query(queryStr)
 	if err != nil {
 		log.Printf("[error] %v \n", err)
 		return err
