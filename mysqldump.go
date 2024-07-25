@@ -243,8 +243,9 @@ func writeTableData(db *sql.DB, table string, condition string, buf *bufio.Write
 	_, _ = buf.WriteString("-- ----------------------------\n")
 	queryStr := fmt.Sprintf("SELECT * FROM `%s`", table)
 	if len(condition) > 0 {
-		queryStr += fmt.Sprintf(" %s", condition)
+		queryStr += fmt.Sprintf(" %s where ", condition)
 	}
+	log.Println(queryStr)
 	lineRows, err := db.Query(queryStr)
 	if err != nil {
 		log.Printf("[error] %v \n", err)
