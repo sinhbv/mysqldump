@@ -275,7 +275,6 @@ func writeTableData(db *sql.DB, table string, condition string, buf *bufio.Write
 		log.Printf("[error] %v \n", err)
 		return err
 	}
-
 	var values [][]interface{}
 	for lineRows.Next() {
 		row := make([]interface{}, len(columns))
