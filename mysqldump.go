@@ -22,6 +22,8 @@ type dumpOption struct {
 	// 导出表数据
 	isData bool
 
+	isOnlyData bool
+
 	// 导出指定表, 与 isAllTables 互斥, isAllTables 优先级高
 	tables []string
 	// 导出全部表
@@ -48,6 +50,13 @@ func WithDropTable() DumpOption {
 func WithData() DumpOption {
 	return func(option *dumpOption) {
 		option.isData = true
+	}
+}
+
+// 导出表数据
+func WithOnlyData() DumpOption {
+	return func(option *dumpOption) {
+		option.isOnlyData = true
 	}
 }
 
@@ -156,11 +165,13 @@ func Dump(dsn string, opts ...DumpOption) error {
 			_, _ = buf.WriteString(fmt.Sprintf("DROP TABLE IF EXISTS `%s`;\n", table))
 		}
 
-		// 导出表结构
-		err = writeTableStruct(db, table, buf)
-		if err != nil {
-			log.Printf("[error] %v \n", err)
-			return err
+		if !o.isOnlyData {
+			// 导出表结构
+			err = writeTableStruct(db, table, buf)
+			if err != nil {
+				log.Printf("[error] %v \n", err)
+				return err
+			}
 		}
 
 		// 导出表数据
